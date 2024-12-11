@@ -1,33 +1,57 @@
-const mongoose = require('mongoose');
+// src/models/userModel.js
+const dbConnect = require('../config/dbConnect');
 
-const userSchema = new mongoose.Schema({
-    username : {
-        type: String,
-        required: [true, 'Please provide a username'],
-        unique: true
-    },
-    password: {
-        type: String,
-        required: [true, 'Please provide a password']
-    },
-    role: {
-        type: String,
-        enum: ['user', 'admin', 'vorstand', 'notenwart'],
-        default: 'user'
-    },
-},
- {
-    timestamps: true,
-    autoIndex: true
- }
-)
+const connection = dbConnect(); // Verbindung aufrufen
 
-// // Pre-Save Hook
-// userSchema.pre('save', function(next) {
-//     if (!this.role) { // Überprüfen, ob role leer ist
-//         this.role = 'user'; // Setzen Sie role auf 'user', wenn es leer ist
-//     }
-//     next(); // Fahren Sie mit dem Speichern fort
-// });
+class User {
+    static createTable() {
+        const createTableSQL = `
+            CREATE TABLE IF NOT EXISTS users (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                username VARCHAR(255) NOT NULL UNIQUE,
+                password VARCHAR(255) NOT NULL,
+                role ENUM('user', 'admin', 'vorstand', 'notenwart') DEFAULT 'user',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            )
+        `;
+        
+        return new Promise((resolve, reject) => {
+            connection.query(createTableSQL, (error, results) => {
+                if (error) {
+                    console.error('Error creating users table:', error);
+                    reject(error);
+                } else {
+                    console.log('Users table created or already exists');
+                    resolve(results);
+                }
+            });
+        });
+    }
 
-module.exports = mongoose.model('User', userSchema);
+    static findOne(conditions) {
+        return new Promise((resolve, reject) => {
+            connection.query('SELECT * FROM users WHERE ?', conditions, (error, results) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve(results[0]);
+                }
+            });
+        });
+    }
+
+    static create(userData) {
+        return new Promise((resolve, reject) => {
+            connection.query('INSERT INTO users SET ?', userData, (error, results) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve(results);
+                }
+            });
+        });
+    }
+}
+
+module.exports = User;
