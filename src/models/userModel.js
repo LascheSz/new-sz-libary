@@ -1,10 +1,8 @@
 // src/models/userModel.js
-const dbConnect = require('../config/dbConnect');
-
-const connection = dbConnect(); // Verbindung aufrufen
+const db = require('../config/dbConnect');
 
 class User {
-    static createTable() {
+    static async createTable() {
         const createTableSQL = `
             CREATE TABLE IF NOT EXISTS users (
                 id INT PRIMARY KEY AUTO_INCREMENT,
@@ -16,41 +14,31 @@ class User {
             )
         `;
         
-        return new Promise((resolve, reject) => {
-            connection.query(createTableSQL, (error, results) => {
-                if (error) {
-                    console.error('Error creating users table:', error);
-                    reject(error);
-                } else {
-                    console.log('Users table created or already exists');
-                    resolve(results);
-                }
-            });
-        });
+        try {
+            await db.query(createTableSQL);
+            console.log('Users table created or already exists');
+        } catch (error) {
+            console.error('Error creating users table:', error);
+            throw error;
+        }
     }
 
-    static findOne(conditions) {
-        return new Promise((resolve, reject) => {
-            connection.query('SELECT * FROM users WHERE ?', conditions, (error, results) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    resolve(results[0]);
-                }
-            });
-        });
+    static async findOne(conditions) {
+        try {
+            const [rows] = await db.query('SELECT * FROM users WHERE ?', conditions);
+            return rows[0];
+        } catch (error) {
+            throw error;
+        }
     }
 
-    static create(userData) {
-        return new Promise((resolve, reject) => {
-            connection.query('INSERT INTO users SET ?', userData, (error, results) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    resolve(results);
-                }
-            });
-        });
+    static async create(userData) {
+        try {
+            const [result] = await db.query('INSERT INTO users SET ?', userData);
+            return result;
+        } catch (error) {
+            throw error;
+        }
     }
 }
 

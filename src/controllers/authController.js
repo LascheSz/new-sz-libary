@@ -38,12 +38,12 @@ const login = async (req, res) => {
         const user = await User.findOne({username});
 
         if (!user) {
-            return res.status(404).json({message: 'User not found'});
+            return res.status(404).json({message: 'Benutzer nicht gefunden'});
         }
 
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
-            return res.status(400).json({message: 'Invalid credentials'});
+            return res.status(400).json({message: 'Ungültige Anmeldedaten'});
         }
 
         const token = jwt.sign({
@@ -51,7 +51,13 @@ const login = async (req, res) => {
             role: user.role
         }, process.env.JWT_SECRET, {expiresIn: '1h'});
 
-        res.status(200).json({ token });
+        res.status(200).json({
+            token,
+            user: {
+                username: user.username,
+                role: user.role
+            }
+        });
     } catch (error) {
         res.status(500).json({message: error.message});
     }
