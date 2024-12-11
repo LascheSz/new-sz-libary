@@ -16,6 +16,10 @@ app.use(express.static(path.join(__dirname, 'public')))
 app.use('/api/auth', authRoutes)
 app.use('/api/user', userRoutes)
 
+app.get('/login', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
 // Create tables on startup
 async function initializeDatabase() {
     try {
